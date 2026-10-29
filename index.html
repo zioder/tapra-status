@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tapra Status</title>
+    <meta
+      name="description"
+      content="Live status and uptime of the Tapra API (Scribe, Speak, Translate), website and developer platform."
+    />
+    <link rel="icon" href="assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fef8ee;
+        --card: #fffdf9;
+        --text: #2a1a0e;
+        --muted: #7a6656;
+        --border: rgba(42, 26, 14, 0.12);
+        --rule: rgba(42, 26, 14, 0.08);
+        --accent: #d4621a;
+        --empty: rgba(42, 26, 14, 0.1);
+        --ok: #2f8f57;
+        --degraded: #e09a2f;
+        --partial: #d4621a;
+        --down: #c0392b;
+        --maintenance: #3f74c4;
+        --tip-bg: #2a1a0e;
+        --tip-text: #fef3e2;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #2a1a0e;
+          --card: #33210f;
+          --text: #fef3e2;
+          --muted: #c2ab92;
+          --border: rgba(254, 243, 226, 0.13);
+          --rule: rgba(254, 243, 226, 0.08);
+          --accent: #f4ae52;
+          --empty: rgba(254, 243, 226, 0.12);
+          --ok: #4cb877;
+          --degraded: #f4ae52;
+          --partial: #e57a34;
+          --down: #e2574a;
+          --maintenance: #6c9be0;
+          --tip-bg: #fef3e2;
+          --tip-text: #2a1a0e;
+          color-scheme: dark;
+        }
+        .logo img {
+          filter: invert(1);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 15px/1.5 'IBM Plex Sans', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 36px 0 32px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: -0.02em;
+      }
+      .logo img {
+        width: 28px;
+        height: 28px;
+      }
+      .logo span {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .header-links {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        background: var(--card);
+        white-space: nowrap;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      @media (prefers-color-scheme: dark) {
+        .btn.primary {
+          color: #2a1a0e;
+        }
+      }
+
+      .banner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 22px;
+        border-radius: 12px;
+        color: #fff;
+        background: var(--muted);
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .banner.operational {
+        background: var(--ok);
+      }
+      .banner.degraded {
+        background: var(--degraded);
+        color: #2a1a0e;
+      }
+      .banner.partial {
+        background: var(--partial);
+      }
+      .banner.down {
+        background: var(--down);
+      }
+      .banner.maintenance {
+        background: var(--maintenance);
+      }
+      .banner svg {
+        flex: none;
+      }
+      .checked {
+        margin: 10px 2px 0;
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .stale {
+        color: var(--partial);
+      }
+
+      .notice {
+        margin-top: 28px;
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--partial);
+        border-radius: 10px;
+        background: var(--card);
+        padding: 16px 20px;
+      }
+      .notice.maintenance {
+        border-left-color: var(--maintenance);
+      }
+      .notice h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+
+      section {
+        margin-top: 40px;
+      }
+      h2 {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 12px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--card);
+        overflow: hidden;
+      }
+      .group-title {
+        padding: 12px 22px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        background: var(--rule);
+        border-bottom: 1px solid var(--border);
+      }
+      .component {
+        padding: 18px 22px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .component:last-child {
+        border-bottom: 0;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .name {
+        font-weight: 600;
+      }
+      .desc {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 1px;
+      }
+      .state {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .state.operational {
+        color: var(--ok);
+      }
+      .state.degraded {
+        color: var(--degraded);
+      }
+      .state.down {
+        color: var(--down);
+      }
+      .state.maintenance {
+        color: var(--maintenance);
+      }
+      .note {
+        margin-top: 6px;
+        font-size: 13px;
+        color: var(--maintenance);
+      }
+      .bars {
+        display: flex;
+        gap: 2px;
+        height: 34px;
+        margin-top: 12px;
+      }
+      .day {
+        flex: 1;
+        min-width: 0;
+        border-radius: 2px;
+        background: var(--empty);
+        cursor: default;
+        transition: opacity 0.12s;
+      }
+      .bars:hover .day {
+        opacity: 0.55;
+      }
+      .bars .day:hover,
+      .bars .day.active {
+        opacity: 1;
+      }
+      .day.ok {
+        background: var(--ok);
+      }
+      .day.degraded {
+        background: var(--degraded);
+      }
+      .day.partial {
+        background: var(--partial);
+      }
+      .day.down {
+        background: var(--down);
+      }
+      .day.maintenance {
+        background: var(--maintenance);
+      }
+      .axis {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .axis::before,
+      .axis::after {
+        content: '';
+        order: 2;
+        flex: 1;
+        height: 1px;
+        background: var(--rule);
+      }
+      .axis::after {
+        order: 4;
+      }
+      .axis .from {
+        order: 1;
+      }
+      .axis .uptime {
+        order: 3;
+        font-family: 'IBM Plex Mono', monospace;
+        color: var(--text);
+      }
+      .axis .to {
+        order: 5;
+      }
+      .days-30 {
+        display: none;
+      }
+      @media (max-width: 600px) {
+        .bars .day:nth-child(-n + 60) {
+          display: none;
+        }
+        .days-90 {
+          display: none;
+        }
+        .days-30 {
+          display: inline;
+        }
+        .banner {
+          font-size: 17px;
+          padding: 16px 18px;
+        }
+        .component,
+        .group-title {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+        header {
+          padding: 24px 0;
+        }
+        .btn.secondary {
+          display: none;
+        }
+      }
+
+      .tip {
+        position: fixed;
+        z-index: 10;
+        pointer-events: none;
+        background: var(--tip-bg);
+        color: var(--tip-text);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 13px;
+        line-height: 1.45;
+        min-width: 170px;
+        max-width: 240px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+        opacity: 0;
+        transform: translateY(4px);
+        transition:
+          opacity 0.1s,
+          transform 0.1s;
+      }
+      .tip.show {
+        opacity: 1;
+        transform: none;
+      }
+      .tip strong {
+        display: block;
+        margin-bottom: 2px;
+      }
+      .tip .pct {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .incident-day {
+        padding: 16px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .incident-day h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .none {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .incident {
+        margin-top: 10px;
+      }
+      .incident-title {
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .incident-title.minor {
+        color: var(--degraded);
+      }
+      .incident-title.major {
+        color: var(--partial);
+      }
+      .incident-title.critical {
+        color: var(--down);
+      }
+      .incident-title.maintenance {
+        color: var(--maintenance);
+      }
+      .update {
+        margin-top: 8px;
+        font-size: 14px;
+      }
+      .update b {
+        text-transform: capitalize;
+      }
+      .update time {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      footer {
+        margin: 48px 0 40px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .skeleton {
+        height: 66px;
+        border-radius: 12px;
+        background: var(--empty);
+      }
+      .error {
+        color: var(--down);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a class="logo" href="https://www.tapra.tn">
+          <img src="assets/tapra-logo-128.png" alt="" width="28" height="28" />
+          tapra <span>status</span>
+        </a>
+        <nav class="header-links">
+          <a class="btn secondary" href="https://www.tapra.tn/docs">API docs</a>
+          <a class="btn primary" href="mailto:contact@tapra.tn?subject=Tapra%20issue%20report"
+            >Report an issue</a
+          >
+        </nav>
+      </header>
+
+      <main>
+        <div id="banner" class="skeleton" aria-live="polite"></div>
+        <div class="checked" id="checked"></div>
+        <div id="notices"></div>
+
+        <section>
+          <h2>
+            Uptime <span class="days-90">over the past 90 days</span
+            ><span class="days-30">over the past 30 days</span>
+          </h2>
+          <div class="card" id="components"></div>
+        </section>
+
+        <section>
+          <h2>Past incidents</h2>
+          <div id="incidents"></div>
+        </section>
+      </main>
+
+      <footer>
+        <span>Checked every 5 minutes from outside our infrastructure.</span>
+        <span><a href="https://www.tapra.tn">tapra.tn</a> · <a href="https://platform.tapra.tn">Platform</a></span>
+      </footer>
+    </div>
+    <div class="tip" id="tip" role="tooltip"></div>
+
+    <script>
+      const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+      const params = new URLSearchParams(location.search);
+      const DATA_URL =
+        params.get('data') ||
+        (local
+          ? './data/status.json'
+          : 'https://raw.githubusercontent.com/zioder/tapra-status/data/status.json');
+      const INCIDENTS_URL = './incidents.json';
+      const DAYS = 90;
+      const STALE_MINUTES = 30;
+      const INCIDENT_DAYS = 7;
+
+      const STATE_LABEL = {
+        operational: 'Operational',
+        degraded: 'Degraded performance',
+        down: 'Outage',
+        maintenance: 'Under maintenance'
+      };
+      const ICONS = {
+        check:
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12.5 2.6 2.5L16 9.5"/></svg>',
+        alert:
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>',
+        wrench:
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>'
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+      function isoDay(date) {
+        return date.toISOString().slice(0, 10);
+      }
+      function lastDays(n) {
+        const out = [];
+        const now = new Date();
+        for (let i = n - 1; i >= 0; i--) out.push(isoDay(new Date(now.getTime() - i * 86400000)));
+        return out;
+      }
+      function fmtDate(iso, opts = { month: 'short', day: 'numeric', year: 'numeric' }) {
+        return new Date(iso + (iso.length === 10 ? 'T12:00:00Z' : '')).toLocaleDateString('en-GB', opts);
+      }
+      function fmtTime(iso) {
+        return new Date(iso).toLocaleString('en-GB', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZoneName: 'short'
+        });
+      }
+      function ago(iso) {
+        const minutes = Math.round((Date.now() - new Date(iso)) / 60000);
+        if (minutes < 1) return 'just now';
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.round(minutes / 60);
+        return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} days ago`;
+      }
+      function pct(value) {
+        if (value === null) return '—';
+        if (value === 1) return '100%';
+        return `${(Math.floor(value * 10000) / 100).toFixed(2)}%`;
+      }
+
+      /** Share of counted checks that were up (degraded still counts as up). */
+      function uptimeOf(days) {
+        let up = 0;
+        let counted = 0;
+        for (const d of days) {
+          if (!d) continue;
+          up += d.up + d.deg;
+          counted += d.n - d.mnt;
+        }
+        return counted > 0 ? up / counted : null;
+      }
+      function dayClass(d) {
+        if (!d || !d.n) return '';
+        const counted = d.n - d.mnt;
+        if (counted <= 0) return 'maintenance';
+        const up = (d.up + d.deg) / counted;
+        if (up < 0.9) return 'down';
+        if (up < 0.995) return 'partial';
+        if (d.deg / counted > 0.1 || up < 1) return 'degraded';
+        return 'ok';
+      }
+
+      function overall(components) {
+        const states = components.map((c) => c.state);
+        const down = states.filter((s) => s === 'down').length;
+        if (down && down === states.length) return ['down', 'Major outage', ICONS.alert];
+        if (down) return ['partial', 'Partial outage', ICONS.alert];
+        if (states.includes('degraded')) return ['degraded', 'Degraded performance', ICONS.alert];
+        if (states.includes('maintenance')) return ['maintenance', 'Scheduled maintenance in progress', ICONS.wrench];
+        return ['operational', 'All systems operational', ICONS.check];
+      }
+
+      function renderBanner(status) {
+        const [cls, text, icon] = overall(status.components);
+        const banner = $('banner');
+        banner.className = `banner ${cls}`;
+        banner.innerHTML = `${icon}<span>${text}</span>`;
+        const age = (Date.now() - new Date(status.checkedAt)) / 60000;
+        $('checked').innerHTML =
+          `<span>Last checked ${esc(ago(status.checkedAt))}</span>` +
+          (age > STALE_MINUTES
+            ? '<span class="stale">Checks are running late; the latest state may be older than shown.</span>'
+            : '');
+      }
+
+      function renderComponents(status) {
+        const days = lastDays(DAYS);
+        const groups = [...new Set(status.components.map((c) => c.group))];
+        $('components').innerHTML = groups
+          .map((group) => {
+            const rows = status.components
+              .filter((c) => c.group === group)
+              .map((c) => {
+                const history = status.history?.[c.id] || {};
+                const series = days.map((day) => history[day]);
+                const series30 = series.slice(-30);
+                const bars = series
+                  .map((d, i) => `<div class="day ${dayClass(d)}" data-id="${esc(c.id)}" data-day="${days[i]}"></div>`)
+                  .join('');
+                const up90 = uptimeOf(series);
+                const up30 = uptimeOf(series30);
+                return `
+                  <div class="component">
+                    <div class="row">
+                      <div>
+                        <div class="name">${esc(c.name)}</div>
+                        <div class="desc">${esc(c.description)}</div>
+                      </div>
+                      <div class="state ${c.state}">${STATE_LABEL[c.state] || c.state}</div>
+                    </div>
+                    ${c.note ? `<div class="note">${esc(c.note)}</div>` : ''}
+                    <div class="bars" role="img" aria-label="${esc(c.name)}: ${pct(up90)} uptime over ${DAYS} days">${bars}</div>
+                    <div class="axis">
+                      <span class="from"><span class="days-90">90 days ago</span><span class="days-30">30 days ago</span></span>
+                      <span class="uptime"><span class="days-90">${pct(up90)}</span><span class="days-30">${pct(up30)}</span> uptime</span>
+                      <span class="to">Today</span>
+                    </div>
+                  </div>`;
+              })
+              .join('');
+            return `<div class="group-title">${esc(group)}</div>${rows}`;
+          })
+          .join('');
+        bindTips(status);
+      }
+
+      function tipHtml(status, id, day) {
+        const d = status.history?.[id]?.[day];
+        const minutes = (count) => Math.round(count * (status.intervalMinutes || 5));
+        let body;
+        if (!d || !d.n) {
+          body = '<span>No data for this day</span>';
+        } else {
+          const up = uptimeOf([d]);
+          const lines = [`<span class="pct">${pct(up)}</span> uptime`];
+          if (d.down) lines.push(`About ${minutes(d.down)} min of outage`);
+          if (d.deg) lines.push(`About ${minutes(d.deg)} min degraded`);
+          if (d.mnt) lines.push(`About ${minutes(d.mnt)} min of maintenance`);
+          if (!d.down && !d.deg && !d.mnt) lines.push('No downtime recorded');
+          body = lines.join('<br>');
+        }
+        return `<strong>${fmtDate(day)}</strong>${body}`;
+      }
+
+      function bindTips(status) {
+        const tip = $('tip');
+        let active = null;
+        const show = (el) => {
+          active?.classList.remove('active');
+          active = el;
+          el.classList.add('active');
+          tip.innerHTML = tipHtml(status, el.dataset.id, el.dataset.day);
+          const r = el.getBoundingClientRect();
+          tip.classList.add('show');
+          const w = tip.offsetWidth;
+          const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+          tip.style.left = `${left}px`;
+          tip.style.top = `${r.bottom + 8}px`;
+        };
+        const hide = () => {
+          active?.classList.remove('active');
+          active = null;
+          tip.classList.remove('show');
+        };
+        document.querySelectorAll('.day').forEach((el) => {
+          el.addEventListener('pointerenter', () => show(el));
+          el.addEventListener('pointerleave', hide);
+          el.addEventListener('click', (e) => {
+            // Tap opens on touch screens; tapping anywhere else closes it.
+            e.stopPropagation();
+            show(el);
+          });
+        });
+        document.addEventListener('click', hide);
+        addEventListener('scroll', hide, { passive: true });
+      }
+
+      function renderIncidents(incidents, status) {
+        const names = Object.fromEntries((status?.components || []).map((c) => [c.id, c.name]));
+        const open = incidents.filter((i) => i.updates?.[0]?.status !== 'resolved' && i.updates?.[0]?.status !== 'completed');
+        const incidentHtml = (i) => `
+          <div class="incident">
+            <div class="incident-title ${esc(i.impact || 'minor')}">${esc(i.title)}</div>
+            ${i.components?.length ? `<div class="desc">Affects ${i.components.map((c) => esc(names[c] || c)).join(', ')}</div>` : ''}
+            ${(i.updates || [])
+              .map((u) => `<div class="update"><b>${esc(u.status)}</b> — ${esc(u.body)}<time datetime="${esc(u.at)}">${esc(fmtTime(u.at))}</time></div>`)
+              .join('')}
+          </div>`;
+
+        $('notices').innerHTML = open
+          .map((i) => `<div class="notice ${i.impact === 'maintenance' ? 'maintenance' : ''}">${incidentHtml(i)}</div>`)
+          .join('');
+
+        const byDay = {};
+        for (const i of incidents) {
+          const started = i.updates?.[i.updates.length - 1]?.at;
+          if (started) (byDay[started.slice(0, 10)] ||= []).push(i);
+        }
+        $('incidents').innerHTML = lastDays(INCIDENT_DAYS)
+          .reverse()
+          .map(
+            (day) => `
+            <div class="incident-day">
+              <h3>${fmtDate(day, { month: 'long', day: 'numeric', year: 'numeric' })}</h3>
+              ${byDay[day] ? byDay[day].map(incidentHtml).join('') : '<div class="none">No incidents reported.</div>'}
+            </div>`
+          )
+          .join('');
+      }
+
+      async function getJson(url) {
+        const response = await fetch(`${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      }
+
+      async function load() {
+        const [status, incidents] = await Promise.all([
+          getJson(DATA_URL).catch(() => null),
+          getJson(INCIDENTS_URL).catch(() => [])
+        ]);
+        if (!status) {
+          $('banner').className = 'banner';
+          $('banner').innerHTML = `${ICONS.alert}<span>Status data is unavailable right now</span>`;
+          $('components').innerHTML = '<div class="component error">Could not load the latest checks. Try again in a minute.</div>';
+        } else {
+          renderBanner(status);
+          renderComponents(status);
+        }
+        renderIncidents(Array.isArray(incidents) ? incidents : [], status);
+      }
+
+      load();
+      setInterval(load, 60_000);
+    </script>
+  </body>
+</html>
