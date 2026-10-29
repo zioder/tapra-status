@@ -9,13 +9,48 @@
       content="Live status and uptime of the Tapra API (Scribe, Speak, Translate), website and developer platform."
     />
     <link rel="icon" href="assets/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="https://www.tapra.tn/fonts/exposure/Exposure-latin.s0.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
     <style>
+      /* Same type as www.tapra.tn: Exposure, loaded from the main site (not copied here).
+         If the site is down the page falls back to the system font and still works. */
+      @font-face {
+        font-family: 'Exposure';
+        src: url('https://www.tapra.tn/fonts/exposure/Exposure-latin.s0.woff2') format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+0020-007F;
+      }
+      @font-face {
+        font-family: 'Exposure';
+        src: url('https://www.tapra.tn/fonts/exposure/Exposure-latin-ext.s0.woff2') format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+00A0-017F;
+      }
+      @font-face {
+        font-family: 'Exposure';
+        src: url('https://www.tapra.tn/fonts/exposure/Exposure-punct.s0.woff2') format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+2000-20CF, U+2100-214F;
+      }
+      @font-face {
+        font-family: 'Exposure';
+        src: url('https://www.tapra.tn/fonts/exposure/Exposure-liga.s0.woff2') format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+FB00-FB06;
+      }
       :root {
         --bg: #fef8ee;
         --card: #fffdf9;
@@ -57,8 +92,12 @@
           filter: invert(1);
         }
       }
-      * {
+      /* Rectangular corners on everything, like the main site. */
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
+        border-radius: 0;
       }
       html {
         -webkit-text-size-adjust: 100%;
@@ -67,7 +106,8 @@
         margin: 0;
         background: var(--bg);
         color: var(--text);
-        font: 15px/1.5 'IBM Plex Sans', system-ui, sans-serif;
+        font: 15px/1.5 'Exposure', ui-sans-serif, system-ui, sans-serif;
+        font-variation-settings: 'EXPO' 0;
         -webkit-font-smoothing: antialiased;
       }
       a {
@@ -91,9 +131,9 @@
         align-items: center;
         gap: 10px;
         text-decoration: none;
-        font-weight: 700;
+        font-weight: 900;
         font-size: 22px;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
       }
       .logo img {
         width: 28px;
@@ -115,7 +155,6 @@
         gap: 6px;
         padding: 7px 14px;
         border: 1px solid var(--border);
-        border-radius: 8px;
         font-size: 14px;
         font-weight: 500;
         text-decoration: none;
@@ -141,7 +180,6 @@
         align-items: center;
         gap: 14px;
         padding: 20px 22px;
-        border-radius: 12px;
         color: #fff;
         background: var(--muted);
         font-size: 20px;
@@ -184,7 +222,6 @@
         margin-top: 28px;
         border: 1px solid var(--border);
         border-left: 4px solid var(--partial);
-        border-radius: 10px;
         background: var(--card);
         padding: 16px 20px;
       }
@@ -209,7 +246,6 @@
       }
       .card {
         border: 1px solid var(--border);
-        border-radius: 12px;
         background: var(--card);
         overflow: hidden;
       }
@@ -273,7 +309,6 @@
       .day {
         flex: 1;
         min-width: 0;
-        border-radius: 2px;
         background: var(--empty);
         cursor: default;
         transition: opacity 0.12s;
@@ -324,7 +359,7 @@
       }
       .axis .uptime {
         order: 3;
-        font-family: 'IBM Plex Mono', monospace;
+        font-variant-numeric: tabular-nums;
         color: var(--text);
       }
       .axis .to {
@@ -366,7 +401,6 @@
         pointer-events: none;
         background: var(--tip-bg);
         color: var(--tip-text);
-        border-radius: 8px;
         padding: 10px 12px;
         font-size: 13px;
         line-height: 1.45;
@@ -388,7 +422,7 @@
         margin-bottom: 2px;
       }
       .tip .pct {
-        font-family: 'IBM Plex Mono', monospace;
+        font-variant-numeric: tabular-nums;
       }
 
       .incident-day {
@@ -449,7 +483,6 @@
       }
       .skeleton {
         height: 66px;
-        border-radius: 12px;
         background: var(--empty);
       }
       .error {
