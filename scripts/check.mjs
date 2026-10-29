@@ -23,12 +23,13 @@ const COMPONENTS = [
     description: 'Speech to text: file transcription and realtime streaming'
   },
   { id: 'speak', group: 'API', name: 'Tapra-Speak', description: 'Text to speech' },
-  {
-    id: 'translate',
-    group: 'API',
-    name: 'Tapra-Translate',
-    description: 'Translation between Tunisian, Arabic, French and English'
-  },
+  // Tapra-Translate isn't launched yet. When it is, put this back:
+  // {
+  //   id: 'translate',
+  //   group: 'API',
+  //   name: 'Tapra-Translate',
+  //   description: 'Translation between Tunisian, Arabic, French and English'
+  // },
   {
     id: 'diarization',
     group: 'API',
@@ -116,6 +117,11 @@ const now = new Date();
 const today = now.toISOString().slice(0, 10);
 const previous = await readJson(OUT, { history: {} });
 const history = previous.history || {};
+
+// Drop history of components no longer listed.
+for (const id of Object.keys(history)) {
+  if (!COMPONENTS.some((component) => component.id === id)) delete history[id];
+}
 
 const components = COMPONENTS.map((component) => {
   const note = maintenance[component.id];

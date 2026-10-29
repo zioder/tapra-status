@@ -4,7 +4,7 @@ The public status page at **https://status.tapra.tn**.
 
 It runs entirely on GitHub, away from Vercel and the GPU host, so it stays up when Tapra is down:
 
-- `.github/workflows/check.yml` runs `scripts/check.mjs` every 5 minutes (GitHub may delay scheduled runs by a few minutes). It probes `https://api.tapra.tn/health` (one response covers Scribe, Speak, Translate and speaker detection), `https://www.tapra.tn/` and `https://platform.tapra.tn/auth/sign-in`, and saves the result to `status.json` on the `data` branch (one commit, amended each run, 90 days of daily counts).
+- `.github/workflows/check.yml` runs `scripts/check.mjs` every 5 minutes (GitHub may delay scheduled runs by a few minutes). It probes `https://api.tapra.tn/health` (one response covers Scribe, Speak and speaker detection; Translate is left out until it launches), `https://www.tapra.tn/` and `https://platform.tapra.tn/auth/sign-in`, and saves the result to `status.json` on the `data` branch (one commit, amended each run, 90 days of daily counts).
 - `index.html` is a static page served by GitHub Pages from `main`. It reads `status.json` from the `data` branch and `incidents.json` from `main`.
 
 A check slower than 4 s counts as degraded; degraded time still counts as uptime.
@@ -14,10 +14,10 @@ A check slower than 4 s counts as degraded; degraded time still counts as uptime
 To mark a component as under maintenance (shown in blue, not counted against uptime), add it to `maintenance.json` and push:
 
 ```json
-{ "translate": "Offline while we upgrade the model." }
+{ "speak": "Offline while we upgrade the model." }
 ```
 
-Component ids: `scribe`, `speak`, `translate`, `diarization`, `website`, `platform`. Remove the entry when it's back.
+Component ids: `scribe`, `speak`, `diarization`, `website`, `platform`. Remove the entry when it's back.
 
 ## Incidents
 
