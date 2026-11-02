@@ -534,11 +534,16 @@
     <script>
       const local = ['localhost', '127.0.0.1'].includes(location.hostname);
       const params = new URLSearchParams(location.search);
-      const DATA_URL =
-        params.get('data') ||
-        (local
-          ? './data/status.json'
-          : 'https://raw.githubusercontent.com/zioder/tapra-status/data/status.json');
+      // Cloudflare Worker first (checks every 5 minutes); the GitHub data branch is
+      // the fallback if the Worker can't be reached.
+      const DATA_URLS = params.get('data')
+        ? [params.get('data')]
+        : local
+          ? ['./data/status.json']
+          : [
+              'https://tapra-status.tapra.workers.dev/status.json',
+              'https://raw.githubusercontent.com/zioder/tapra-status/data/status.json'
+            ];
       const INCIDENTS_URL = './incidents.json';
       const DAYS = 90;
       const STALE_MINUTES = 30;
@@ -685,16 +690,18 @@
 
       function tipHtml(status, id, day) {
         const d = status.history?.[id]?.[day];
-        const minutes = (count) => Math.round(count * (status.intervalMinutes || 5));
+        // Newer days store minutes per state; older ones only counts of checks.
+        const minutes = (key) =>
+          Math.round(d.min ? d.min[key] : d[key] * (status.intervalMinutes || 5));
         let body;
         if (!d || !d.n) {
           body = '<span>No data for this day</span>';
         } else {
           const up = uptimeOf([d]);
           const lines = [`<span class="pct">${pct(up)}</span> uptime`];
-          if (d.down) lines.push(`About ${minutes(d.down)} min of outage`);
-          if (d.deg) lines.push(`About ${minutes(d.deg)} min degraded`);
-          if (d.mnt) lines.push(`About ${minutes(d.mnt)} min of maintenance`);
+          if (d.down) lines.push(`About ${minutes('down')} min of outage`);
+          if (d.deg) lines.push(`About ${minutes('deg')} min degraded`);
+          if (d.mnt) lines.push(`About ${minutes('mnt')} min of maintenance`);
           if (!d.down && !d.deg && !d.mnt) lines.push('No downtime recorded');
           body = lines.join('<br>');
         }
@@ -773,9 +780,20 @@
         return response.json();
       }
 
+      async function getStatus() {
+        for (const url of DATA_URLS) {
+          try {
+            return await getJson(url);
+          } catch {
+            // Try the next source.
+          }
+        }
+        return null;
+      }
+
       async function load() {
         const [status, incidents] = await Promise.all([
-          getJson(DATA_URL).catch(() => null),
+          getStatus(),
           getJson(INCIDENTS_URL).catch(() => [])
         ]);
         if (!status) {

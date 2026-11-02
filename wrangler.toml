@@ -1,0 +1,12 @@
+name = "tapra-status"
+main = "worker/index.mjs"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Free plan allows 1,000 KV writes a day; one write every 5 minutes is 288.
+[[kv_namespaces]]
+binding = "STATUS"
+id = "f26ffe0afa0a489fa2d143d1539d8c11"
