@@ -97,6 +97,11 @@ export async function runCheck({ previous, maintenance = {}, intervalMinutes = 5
     website: stateOf(website),
     platform: stateOf(platform)
   };
+  // Emotion voices run on a separate engine: plain Speak can work while emotion
+  // requests fail. Show that as a partial outage of Speak, not a full one.
+  if (states.speak === 'operational' && body?.services?.speak_emotion === 'down') {
+    states.speak = 'degraded';
+  }
   const latency = {
     scribe: health.ms,
     speak: health.ms,
